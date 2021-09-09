@@ -31,7 +31,5 @@ urlpatterns = [
     path("users/", include('users.urls')),
     path("reference/", include('addrefrun.urls')),
     path("admin/", admin.site.urls),
-    path("mldatasets/", include('mldatasets.urls')),
-    path("mlplayground/", include('mlplayground.urls', namespace = 'mlplayground')),
     path("cablingmap/", include('cablingmap.urls')),
 ]
