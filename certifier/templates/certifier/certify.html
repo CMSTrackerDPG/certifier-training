@@ -1,0 +1,579 @@
+{% extends 'dqmhelper/base.html' %}
+
+{% load static %}
+
+{% load form_tags %}
+
+{% block style %}
+
+<link rel="stylesheet" type="text/css" href="{% static "certifier/css/style.css" %}">
+
+{% endblock %}
+
+{% load bootstrap3 %}
+{% load widget_tweaks %}
+{% load filters %}
+
+{% block content %}
+<div id="addBadReason"></div>
+<form method="POST" action="" id="id_certifier_form" >
+    {% csrf_token %}
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
+    <div class="container-fluid mx-4">
+        <div class="row my-4">
+            <div class="col-sm-6">
+                <div class="row">
+                    <div class="text-left">
+                        <h1>
+                            <span class="badge badge-pill badge-success">
+
+                                <a href="https://cmsoms.cern.ch/cms/runs/report?cms_run={{run_number}}" style="color:white" target="_blank">
+                                {{ run_number }}
+                                </a>
+                            </span>
+                            <span class="badge badge-pill badge-success">{{ reco|capfirst }}</span>
+                            <span class="badge badge-pill badge-success">{{ dataset }}</span>
+                            {% if user.is_superuser %}
+                            <!-- super secret button for developers -->
+                            <span style="cursor: pointer;" onclick="checkAllChecklists();">&nbsp;</span>
+                            {% endif %}
+                        </h1>
+                    </div>
+                </div>
+            </div>
+            <!--================================ USER ===============================-->
+            {% if user.has_shifter_rights and object%}
+            <div class="col-sm-3">
+                <div class="row mt-2 d-flex justify-content-start">
+                    <div class="col-sm-2" style="font-size: 18px; font-weight: bold;">
+                        <label class="col-form-label">
+                            {{ form.user.label }}:
+                        </label>
+                    </div>
+                    <div class="col-sm-10">
+                        {% bootstrap_field form.user label="" %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            <!--================================ DATE ===============================-->
+            <div class="col-sm-3">
+                <div class="row mt-2 d-flex justify-content-end">
+                    <div class="col-sm-2" style="font-size: 18px; font-weight: bold;">
+                        <label for="id_date_month" class="col-form-label">
+                            {{ form.date.label }}:
+                        </label>
+                    </div>
+                    <div class="col-sm-8">
+                        {% bootstrap_field form.date label="" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!--================================ TYPE ===============================-->
+            <div class="col-md-4">
+                <div class="card shadow-sm bg-white">
+                    <div class="card-body">
+
+                        <h6 class="card-title text-primary">Type</h6>
+
+                        <div class="row">
+                            <div class="col-md-4 text-right">
+                                <strong>Run type</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ run.run_type|capfirst }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 text-right">
+                                <strong>B field</strong>
+                            </div>
+                            <div class="col-md-8">
+                                \({{ run.b_field }}\) \({{ run.b_field_unit }}\)
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 text-right">
+                                <strong>Energy</strong>
+                            </div>
+                            <div class="col-md-8">
+                                \({{ run.energy }}\) \({{ run.energy_unit }}\)
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 text-right">
+                                <strong>Particle</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ run.fill.fill_type_runtime }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 text-right">
+                                <strong>Era</strong>
+                            </div>
+                            <div class="col-md-8">
+                                {{ run.fill.era|capfirst }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--================================ LUMI ===============================-->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+
+                        <h6 class="card-title text-success">Lumi</h6>
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>Lumisections</strong>
+                            </div>
+                            <div class="col-md-7">
+                                \({{ run.lumisections }}\)
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>Recorded lumi</strong>
+                            </div>
+                            <div class="col-md-6">
+                                \({{ run.recorded_lumi|floatformat:3  }}\) \({{ run.recorded_lumi_unit }}\)
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>Delivered lumi</strong>
+                            </div>
+                            <div class="col-md-7">
+                                \({{ run.delivered_lumi|floatformat:3 }}\) \({{ run.delivered_lumi_unit }}\)
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>Initial lumi</strong>
+                            </div>
+                            <div class="col-md-7">
+                                \({{ run.init_lumi|floatformat:3 }}\) &times; \({{ run.init_lumi_unit }}\)
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>End lumi</strong>
+                            </div>
+                            <div class="col-md-7">
+                                \({{ run.end_lumi|floatformat:3 }}\) &times; \({{ run.end_lumi_unit }}\)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--================================ Fill ===============================-->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title text-info">Fill</h6>
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>Fill number</strong>
+                            </div>
+                            <div class="col-md-7">
+                                <a href="https://cmsoms.cern.ch/cms/fills/report?cms_fill={{run.fill.fill_number}}" target="_blank">
+                                    {{ run.fill.fill_number }}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>Bunches</strong>
+                            </div>
+                            <div class="col-md-7">
+                                \({{ run.fill.bunches_colliding }}\)
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>Initial lumi</strong>
+                            </div>
+                            <div class="col-md-7">
+                                \({{ run.fill.init_lumi|floatformat:3 }}\) &times; \({{ run.fill.init_lumi_unit }}\)
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>Peak lumi</strong>
+                            </div>
+                            <div class="col-md-7">
+                                \({{ run.fill.peak_lumi|floatformat:3 }}\) &times; \({{ run.fill.peak_lumi_unit }}\)
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-5 text-right">
+                                <strong>Peak pileup</strong>
+                            </div>
+                            <div class="col-md-7">
+                                \({{ run.fill.peak_pileup|floatformat:3 }}\)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+        <!--<div id="includeDataset"></div>-->
+        <div class="row justify-content-md-center no-gutters">
+            <div class="col-md-3">
+                <!--================================ REFERENCE RUN ======================-->
+                <div class="row no-gutters ml-4">
+                    <div class="col-sm-10" style="font-size: 24px;">
+                        {{ form.reference_runreconstruction.label}}:
+                    </div>
+                    <div class="col-sm-12">
+                        {% render_field form.reference_runreconstruction class="custom-select" style="color: green; font-weight:bold;" %}
+                    </div>
+                </div>
+                <!--================================ DATASET ======================
+                <div class="row no-gutters mt-3 ml-4">
+                    <div class="col-sm-2 col-form-label" style="font-size: 18px;">
+                        {{ form.dataset.label}}:
+                    </div>
+                    <div class="col-sm-9">
+                        {% render_field form.dataset class="custom-select" %}
+                    </div>
+                    <div class="col-sm-1 input-group-btn text-right">
+                        <button class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="#id_dataset_modal"
+                                type="button">
+                            <span style="font-weight: bold;">+</span>
+                        </button>
+                    </div>
+                </div>
+                -->
+                <!--================================ CHECKLISTS =========================-->
+                <div class="col-sm mt-3">
+                    {% render_checklist_checkbox form.checklists.general not_required=checklist_not_required %}
+                    {% render_checklist_checkbox form.checklists.trackermap not_required=checklist_not_required %}
+                    {% render_checklist_checkbox form.checklists.pixel not_required=checklist_not_required%}
+                    {% render_checklist_checkbox form.checklists.sistrip not_required=checklist_not_required%}
+                    {% render_checklist_checkbox form.checklists.tracking not_required=checklist_not_required%}
+                </div>
+            </div>
+            <div class="col-md-6 mt-2 pt-2">
+                <!--================================ PIXEL ==============================-->
+                <div class="row no-gutters justify-content-md-center">
+                    <div class="col-sm-2 text-right">
+                        <label for="id_pixel" style="font-size: 24px;">
+                            {{ form.pixel.label }}:
+                        </label>
+                    </div>
+
+                    <div class="col-sm-5 text-center">
+                        <div data-toggle="buttons">
+                            <ul class="list-inline" id="id_pixel">
+                                {% for status in form.pixel.field.choices %}
+                                <li class="list-inline-item">
+                                    <label for="id_pixel_{{forloop.counter0}}" class="btn btn-outline-{{ status.0|translate_to_button_state }} col mx-3">
+                                        <input type="radio" name="pixel" value={{status.0}} required id="id_pixel_{{forloop.counter0}}" class="sr-only"> {{ status.1 }}
+                                    </label>
+                                </li>
+                                {% endfor %}
+                                {% render_field form.pixel class="d-none"%}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2 text-left col-form-label">
+                        {{form.pixel_lowstat}}
+                        <label for="id_pixel_lowstat">
+                            {{form.pixel_lowstat.label}}
+                        </label>
+                    </div>
+                </div>
+                <!--================================ STRIP ==============================-->
+                <div class="row mt-2 no-gutters justify-content-md-center">
+                    <div class="col-sm-2 text-right">
+                        <label for="id_strip" style="font-size: 24px;">
+                            {{ form.strip.label }}:
+                        </label>
+                    </div>
+
+                    <div class="col-sm-5 text-center">
+                        <div data-toggle="buttons">
+                            <ul class="list-inline" id="id_strip">
+                                {% for status in form.strip.field.choices %}
+                                <li class="list-inline-item">
+                                    <label for="id_strip_{{forloop.counter0}}" class="btn btn-outline-{{ status.0|translate_to_button_state }} col mx-3">
+                                        <input type="radio" name="strip" value={{status.0}} required id="id_strip_{{forloop.counter0}}" class="sr-only"> {{ status.1 }}
+                                    </label>
+                                </li>
+                                {% endfor %}
+                                {% render_field form.strip class="d-none"%}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2 text-left col-form-label">
+                        {{form.strip_lowstat}}
+                        <label for="id_strip_lowstat">
+                            {{form.strip_lowstat.label}}
+                        </label>
+                    </div>
+                </div>
+                <!--================================ TRACKING ===========================-->
+                <div class="row mt-2 no-gutters justify-content-md-center">
+                    <div class="col-sm-2 text-right">
+                        <label for="id_tracking" style="font-size: 24px;">
+                            {{ form.tracking.label }}:
+                        </label>
+                    </div>
+
+                    <div class="col-sm-5 text-center">
+                        <div data-toggle="buttons">
+                            <ul class="list-inline" id="id_tracking">
+                                {% for status in form.tracking.field.choices|slice_last_elem %}
+                                <li class="list-inline-item">
+                                    <label for="id_tracking_{{forloop.counter0}}" class="btn btn-outline-{{ status.0|translate_to_button_state }} col mx-3">
+                                        <input type="radio" name="tracking" value={{status.0}} required id="id_tracking_{{forloop.counter0}}" class="sr-only"> {{ status.1 }}
+
+                                    </label>
+                                </li>
+                                {% endfor %}
+                                {% render_field form.tracking class="d-none"%}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-2 text-left col-form-label">
+                        {{form.tracking_lowstat}}
+                        <label for="id_tracking_lowstat">
+                            {{form.tracking_lowstat.label}}
+                        </label>
+                    </div>
+                </div>
+                <!--================================ TRACKERMAP =========================-->
+                <div class="row mt-2 no-gutters justify-content-md-center">
+                    <div class="col-sm-2 text-right">
+                        <label for="id_trackermap" style="font-size: 18px;">
+                            {{ form.trackermap.label}}:
+                        </label>
+                    </div>
+                    <div class="col-sm-5 text-center pl-5">
+                        {% render_field form.trackermap class="custom-select" %}
+                    </div>
+                    <div class="col-sm-2">
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3 mt-2 pt-2">
+                <!--================================ BAD REASON =========================-->
+                <div class="row mr-4 no-gutters">
+                    <div class="col-sm-5 col-form-label" style="font-size: 18px;">
+                        Why bad?
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="input-group">
+                            {% render_field form.bad_reason class="custom-select" %}
+                        </div>
+                    </div>
+                    <div class="col-sm-1 input-group-btn text-right">
+                        <button class="btn btn-success"
+                                data-toggle="modal"
+                                data-target="#id_badreason_modal"
+                                type="button">
+                            <span style="font-weight: bold;">+</span>
+                        </button>
+                    </div>
+                </div>
+                <!--================================ PROBLEMS ============================-->
+                <div class="row mt-4 mr-2">
+                    <div class="col-sm-5 col-form-label" style="font-size: 18px;">
+                        {{ form.pixel_problems.label}}:
+                    </div>
+                    <div class="col-sm-7">
+                        {% render_field form.pixel_problems class="selectpicker col-sm-12" multiple="" data-selected-text-format="count > 2"%}
+                    </div>
+                </div>
+                <div class="row mt-4 mr-2">
+                    <div class="col-sm-5 col-form-label" style="font-size: 18px;">
+                        {{ form.strip_problems.label}}:
+                    </div>
+                    <div class="col-sm-7">
+                        {% render_field form.strip_problems class="selectpicker col-sm-12" multiple="" data-selected-text-format="count > 2"%}
+                    </div>
+                </div>
+                <div class="row mt-4 mr-2">
+                    <div class="col-sm-5 col-form-label" style="font-size: 18px;">
+                        {{ form.tracking_problems.label}}:
+                    </div>
+                    <div class="col-sm-7">
+                        {% render_field form.tracking_problems class="selectpicker col-sm-12" multiple="" data-selected-text-format="count > 2"%}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--================================ COMMENT ============================-->
+        <div class="container-fluid">
+            <div class="row mb-4">
+                <div class="col-sm-12 col-form-label" style="font-size: 18px">
+                    {{ form.comment.label}}:
+                </div>
+                <div class="col-sm-12 overflow">
+                    {% render_field form.comment class="form-control" style="height: 90px;" id="id_comment_box"%}
+                </div>
+            </div>
+        </div>
+        <!--================================ SUBMIT ==============================-->
+        <div class="row justify-content-center">
+            <div class="col-sm-3"></div>
+            <div class="col-sm-6 text-center">
+                {% if object %}
+                <input class="btn btn-primary btn-lg" type="submit" value="Update">
+                {% else %}
+                <input class="btn btn-primary btn-lg" type="submit" value="Submit">
+                {% endif %}
+                <input class="btn btn-secondary btn-lg" type="button" value="Abort" onclick="history.back()">
+            </div>
+            <div class="col-sm-3"></div>
+        </div>
+    </div>
+</form>
+    {% render_checklist_modal form.checklists.general %}
+    {% render_checklist_modal form.checklists.trackermap %}
+    {% render_checklist_modal form.checklists.pixel %}
+    {% render_checklist_modal form.checklists.sistrip %}
+    {% render_checklist_modal form.checklists.tracking %}
+{% endblock content %}
+
+<!--================================ SCRIPTS ==============================-->
+{% block scripts %}
+<script src="{% static "checklists/js/checklist.js" %}"></script>
+<script>
+function expandTextarea(id, initial_height) {
+    document.getElementById(id).addEventListener('keyup', function() {
+        this.style.overflow = 'hidden';
+        this.style.height = 0;
+        if (this.scrollHeight > initial_height)
+            this.style.height = this.scrollHeight + 'px';
+        else
+            this.style.height = initial_height + 'px';
+    }, false);
+}
+
+expandTextarea('id_comment_box', 90);
+</script>
+<script type="text/javascript">
+    function label_highlight(inputName){
+        $(document).ready(function(){
+            radio_button= $("input[name='"+inputName+"']:checked")[0]
+            if(radio_button){
+                var id = radio_button.id
+                label = $("label[for='"+id+"']")
+                label.toggleClass('active')
+            }
+        });
+    }
+
+    function radio_select_change(inputName){
+        $('input[type=radio][name='+inputName+']').change(function() {
+            if( ($("input[name='pixel']:checked")[0] && $("input[name='pixel']:checked")[0].value == "bad") ||
+                ($("input[name='strip']:checked")[0] && $("input[name='strip']:checked")[0].value == "bad") ||
+                ($("input[name='tracking']:checked")[0] && $("input[name='tracking']:checked")[0].value == "bad") ) {
+                $("#id_bad_reason").attr("required", true);
+                $("#id_comment").attr("required", true);
+            } else {
+                $("#id_bad_reason").removeAttr('required');
+                $("#id_comment").removeAttr('required');
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        label_highlight('pixel')
+        label_highlight('strip')
+        label_highlight('tracking')
+        radio_select_change('pixel')
+        radio_select_change('strip')
+        radio_select_change('tracking')
+    });
+</script>
+
+<script>
+    var myVar;
+
+    var $myForm = $("#id_certifier_form");
+    $myForm.submit(function(){
+        $myForm.submit(function(){
+            return false;
+        });
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        /**
+         * Popup Checklist modal with items when trying to check a checklist checkbox
+         */
+        $("#addBadReason").load("{% url 'addbadreason' %}");
+        $('[id^="id_checklist_"]').each(function() {
+            popupChecklistModal($(this));
+        });
+    });
+</script>
+<script>
+function getNextIndex(s, v) {
+    var max = 0;
+    for ( var i = 0; i < s.options.length; i++ ) {
+        if ( parseInt(s.options[i].value) > max ) {
+            max = s.options[i].value
+        }
+    }
+    return String(parseInt(max)+1);
+}
+function add_bad_reason(){
+    $.ajax({
+        headers: { "X-CSRFToken": '{{csrf_token}}' },
+        type: "POST",
+        url: "{% url 'certify' run_number=run_number reco=reco %}",
+        data: {
+           'name': $('#id_bad_reason_name').val(),
+           'description' : $('#id_bad_reason_desc').val(),
+           'dataset' : "{{ dataset }}"
+        },
+        success: function() {
+            if ($('#id_bad_reason option').length == 0) {
+                var $lastValue = 1
+            }else{
+                var $value = $('#id_bad_reason option').filter(function() {
+                  return $(this).text() === $('#id_bad_reason_name').val();
+                }).first().attr('value');
+
+                if (!$value) {
+                    var $nextValue = getNextIndex(document.getElementById('id_bad_reason'),$('#id_bad_reason_name').val());
+                    $('#id_bad_reason').append(new Option($('#id_bad_reason_name').val(),$nextValue, true, true));
+                    $('#id_bad_reason input[name="bad_reason"]').val($nextValue);
+                }else{
+                    $('#id_bad_reason').val($value).change();
+                    $('#id_bad_reason input[name="bad_reason"]').val($value);
+                    alert("Bad reason already exists!");
+                }
+            }
+        }
+    });
+};
+</script>
+{% endblock scripts %}
