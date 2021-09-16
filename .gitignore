@@ -272,3 +272,6 @@ wsgi/static/
 users/migrations/0002_auto_20210329_1345.py
 
 */tests/
+
+
+db.sqlite3
